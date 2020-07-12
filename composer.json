@@ -1,0 +1,16 @@
+{
+    "name": "kings/press",
+    "description": "An elegant markdown-powered blog for the Laravel framework",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kingsley Nwankwo",
+            "email": "kingkom001@yahoo.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "require-dev": {
+        "orchestra/testbench": "^6.0@dev"
+    }
+}
