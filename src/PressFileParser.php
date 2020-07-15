@@ -4,6 +4,7 @@ namespace Kings\Press;
 
 use Illuminate\Support\Facades\File;
 use Kings\Press\MarkdownParser;
+use Kings\Press\Facades\Press;
 use Carbon\Carbon;
 
 class PressFileParser
@@ -34,39 +35,56 @@ class PressFileParser
         $pattern = '/^\-{3}(.*?)\-{3}(.*)/s';
         $content = File::exists($this->fileName) ? File::get($this->fileName):$this->fileName;
         //dd($content);
-        preg_match('/^\-{3}(.*?)\-{3}(.*)/s',
+        preg_match(
+            '/^\-{3}(.*?)\-{3}(.*)/s',
             $content,
-            $this->rawData);
+            $this->rawData
+        );
 
         //dd($this->data);
     }
 
     protected function explodeData()
     {
-        $fields = (explode("\n",trim($this->rawData[1])));
+        $fields = (explode("\n", trim($this->rawData[1])));
         //dd($fields);
-        if(count($this->rawData)):
-            foreach($fields as $fieldString){
+        if (count($this->rawData)):
+            foreach ($fields as $fieldString) {
                 preg_match('/(.*):\s*(.*)/', $fieldString, $field_array);
                 $this->data[$field_array[1]] = $field_array[2];
             }
-            $this->data['body'] = trim($this->rawData[2]);
+        $this->data['body'] = trim($this->rawData[2]);
         endif;
         //dd($this->data);
-
     }
 
     protected function processFields()
     {
-        foreach($this->data as $field => $value){
+        foreach ($this->data as $field => $value) {
 
-            $class = "Kings\\Press\\Fields\\".ucfirst($field);
-            if(!class_exists($class) && !method_exists($class,'process')){
+            //$class = "Kings\\Press\\Fields\\".ucfirst($field);
+            $class = $this->getField($field);
+            //dd($class);
+            if (!class_exists($class) && !method_exists($class, 'process')) {
                 $class = "Kings\\Press\\Fields\\Extra";
+                //dd($class);
             }
-            $this->data = array_merge($this->data,$class::process($field,$value,$this->data));
+            $this->data = array_merge($this->data, $class::process($field, $value, $this->data));
         }
         //dd($this->data);
     }
 
+    private function getField($field)
+    {
+        $field = ucfirst($field);
+        //dd(Press::availableFields());
+        foreach (Press::availableFields() as $availableField) {
+            //dd($availableField);
+            $class = new \ReflectionClass($availableField);
+            //dd($class->getShortName());
+            if ($class->getShortName() == $field) {
+                return $class->getName();
+            }
+        }
+    }
 }
